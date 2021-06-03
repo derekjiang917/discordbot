@@ -10,10 +10,11 @@ import urllib.parse
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+MONGOURL = os.getenv('URL')
 client = discord.Client()
 
 #mongodb
-cluster = MongoClient("mongodb+srv://derekjiang917:Ehsw^Yb3q&hUR2@tutorialcluster.atalb.mongodb.net/test")
+cluster = MongoClient(MONGOURL)
 db = cluster["userdata"]
 collection = db["userdata"]
 
