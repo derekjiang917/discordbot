@@ -7,11 +7,12 @@ from discord.ext import commands
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import urllib.parse
+import asyncio
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 MONGOURL = os.getenv('URL')
-client = discord.Client()
+bot = commands.Bot(command_prefix='!')
 
 #mongodb
 cluster = MongoClient(MONGOURL)
@@ -21,15 +22,30 @@ collection = db["userdata"]
 with open("swears.txt") as file:
     swears = set([word.strip() for word in file.readlines()])
 
-@client.event
+@bot.event
 async def on_ready():
-    print(f'{client.user.name} has connected to Discord!')
+    print(f'{bot.user.name} has connected to Discord!')
+
+@bot.command()
+async def timer(ctx, time = ''):
+    if(time.isnumeric()):
+        sleep_time = int(time)
+        time += " seconds"
+    else:
+        try:
+            h, m, s = time.split(':')
+            sleep_time = int(h) * 3600 + int(m) * 60 + int(s)
+        except:
+            await ctx.send("Usage: !timer <seconds> or !timer <HH:MM:SS>")
+            return
+    await ctx.send("ok sir set a timer for " + time)
+    await asyncio.sleep(sleep_time)
+    await ctx.send("@x cr trees are done <:loggers:875457790339067964>")
 
 
-
-@client.event
+@bot.event
 async def on_message(ctx):
-    if ctx.author == client.user:
+    if ctx.author == bot.user:
         return
     myquery = { "_id": ctx.author.id }
     #if msg has any swears
@@ -46,10 +62,15 @@ async def on_message(ctx):
                 score = result["score"]
             score = score + 1
             collection.update_one({"_id":ctx.author.id}, {"$set":{"score":score}})
-            notifications = [f'you swore {score} times :angry:', f'uhhmm youve been a bigot {score} times settle down', f'uhhhhh we got a level {score} bigot alert :fishHMMM:']
+            notifications = [
+                f'you swore {score} times :angry:', f'uhhmm youve been a bigot {score} times settle down',
+                f'uhhhhh we got a level {score} bigot alert <:fishHMMM:832321878210248774>', f'cringe nazi <:mordy:839593308866740243>',
+                f'YIKES <:teeth:700532868547477574>'
+                ]
             await ctx.channel.send(random.choice(notifications))
+    await bot.process_commands(ctx)
 
-@client.event
+@bot.event
 async def on_error(event, *args, **kwargs):
     with open('err.log', 'a') as f:
         if event == 'on_message':
@@ -58,4 +79,4 @@ async def on_error(event, *args, **kwargs):
             raise discord.DiscordException
 
 
-client.run(TOKEN)
+bot.run(TOKEN)
